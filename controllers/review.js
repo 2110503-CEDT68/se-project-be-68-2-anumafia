@@ -28,6 +28,13 @@ exports.createReview = async (req, res, next) => {
             });
         }
 
+        if (hasInterviewed.sessionDate > Date.now() && req.user.role !== 'admin') {
+            return res.status(400).json({
+                success: false,
+                message: "You can only review after the interview session is completed."
+            });
+        }
+
         const alreadyReviewed = await Review.findOne({
             user: req.user.id,
             company: req.body.company
