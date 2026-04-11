@@ -171,3 +171,120 @@ exports.updatePassword = async(req, res, next) => {
     }
 }
 
+// @desc    Ban user by ID for a duration
+// @route   PUT /api/v1/auth/ban/:id
+// @access  Private (admin only)
+exports.banUser = async (req, res, next) => {
+    try {
+        const { duration, unit, reason } = req.body;
+        // duration: number, unit: 'minutes' | 'hours' | 'days' | 'permanent'
+
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                msg: 'User not found'
+            });
+        }
+
+        if (user.role === 'admin') {
+            return res.status(400).json({
+                success: false,
+                msg: 'Cannot ban an admin user'
+            });
+        }
+
+        if (user.ban.isBanned) {
+            return res.status(400).json({
+                success: false,
+                msg: 'User is already banned'
+            });
+        }
+
+        // Calculate bannedUntil
+        let bannedUntil = null;
+
+        if (unit === 'permanent') {
+            bannedUntil = null; // null = permanent
+        } else {
+            if (!duration || !unit) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'Please provide duration and unit (minutes, hours, days) or use permanent'
+                });
+            }
+
+            const ms = { minutes: 60*1000, hours: 60*60*1000, days: 24*60*60*1000 };
+            if (!ms[unit]) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'Unit must be minutes, hours, days, or permanent'
+                });
+            }
+
+            bannedUntil = new Date(Date.now() + duration * ms[unit]);
+        }
+
+        user.ban = {
+            isBanned: true,
+            bannedUntil,
+            reason: reason || null
+        };
+
+        await user.save({ validateBeforeSave: false });
+
+        res.status(200).json({
+            success: true,
+            msg: `User ${user.name} has been banned`,
+            data: {
+                bannedUntil: bannedUntil ?? 'permanent',
+                reason: user.ban.reason
+            }
+        });
+    }
+    catch (err) {
+        console.log(err.stack);
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
+};
+
+// @desc    Unban user by ID
+// @route   PUT /api/v1/auth/unban/:id
+// @access  Private (admin only)
+exports.unbanUser = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                msg: 'User not found'
+            });
+        }
+
+        if (!user.ban.isBanned) {
+            return res.status(400).json({
+                success: false,
+                msg: 'User is not banned'
+            });
+        }
+
+        user.ban = {
+            isBanned: false,
+            bannedUntil: null,
+            reason: null
+        };
+
+        await user.save({ validateBeforeSave: false });
+
+        res.status(200).json({
+            success: true,
+            msg: `User ${user.name} has been unbanned`
+        });
+    }
+    catch (err) {
+        console.log(err.stack);
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
+};
