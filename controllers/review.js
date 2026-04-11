@@ -32,3 +32,58 @@ exports.createReview = async (req, res, next) => {
         });
     }
 };
+
+
+// @desc    Update review for company
+// @route   PUT /api/v1/reviews/:id
+// @access  Private
+exports.updateReview = async (req, res, next) => {
+	try {
+
+		let review = await Review.findById(req.params.id);
+
+		if (!review) {
+			return res.status(400).json({
+				success: false,
+				message: `No review found with id of ${req.params.id}`
+			});
+		}
+
+		if(review.user.toString() !== req.user.id && req.user.role !== 'admin') {
+			return res.status(401).json({
+				success: false,
+				message: `User ${req.user.id} is not authorized to update this review`
+			});
+		}
+
+		req.body.reviewText = req.body.reviewText.trim(); //Trim whitespace from review text
+
+		review = await Review.findByIdAndUpdate(req.params.id, req.body, {
+			new: true,
+			runValidators: true
+		});
+
+		if (!review) {
+			return res.status(400).json({
+				success: false
+			});
+		}
+
+		res.status(200).json({
+			success: true,
+			data: review
+		});
+	} catch (err) {
+		if (err.name === 'ValidationError') {
+            const message = Object.values(err.errors).map(val => val.message).join(', ');
+            return res.status(400).json({
+                success: false,
+                message: message
+            });
+        }
+
+        res.status(400).json({
+            success: false
+        });
+	}
+}
