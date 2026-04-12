@@ -24,7 +24,7 @@ exports.createReview = async (req, res, next) => {
         if (!hasInterviewed && req.user.role !== 'admin') {
             return res.status(403).json({
                 success: false,
-                message: `User has never interviewed with this company. Cannot add a review.`
+                message: "User has never interviewed with this company. Cannot add a review."
             });
         }
 
