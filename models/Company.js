@@ -23,6 +23,14 @@ const CompanySchema = new mongoose.Schema({
     tel: {
         type: String,
         required: [true, 'Please add a telephone number']
+    },
+    ratingAverage: {
+        type: Number,
+        default: 0
+    },
+    reviewCount: {
+        type: Number,
+        default: 0
     }
 },
 {
