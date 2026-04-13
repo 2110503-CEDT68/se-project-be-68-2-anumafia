@@ -64,3 +64,34 @@ exports.createReview = async (req, res, next) => {
         });
     }
 };
+
+// @desc    Get review for company
+// @route   GET /api/v1/reviews/:id
+// @access  Public
+exports.getReview = async (req, res, next) => {
+    try {
+        const reviews = await Review.find({ company: req.params.id })
+            .populate({
+                path: 'user',
+                select: 'name'
+            });
+
+        if (!reviews) {
+            return res.status(404).json({
+                success: false,
+                message: "No review this company"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: reviews
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "Cannot get review"
+        });
+    }
+};
