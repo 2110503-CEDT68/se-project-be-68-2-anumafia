@@ -1,5 +1,6 @@
 const Company = require('../models/Company')
 const Interview = require('../models/Interview.js');
+const Review = require('../models/Review.js');
 
 // @desc    Get all companies
 // @route   GET /api/v1/companies
@@ -181,6 +182,7 @@ exports.deleteCompany = async (req, res, next) => {
             });
         }
         await Interview.deleteMany({ company: req.params.id });
+        await Review.deleteMany({ company: req.params.id });
         await Company.deleteOne({ _id: req.params.id });
 
         res.status(200).json({
