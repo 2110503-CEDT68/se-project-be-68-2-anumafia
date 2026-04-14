@@ -11,7 +11,8 @@ const cors = require('cors');
 
 //Load env vars
 dotenv.config({ path: './config/config.env' });
-
+const { setServers } = require("node:dns/promises");
+setServers(["1.1.1.1", "8.8.8.8"]);
 // Connect to database
 connectDB();
 
@@ -55,12 +56,12 @@ app.set('query parser', 'extended');
 const auth = require('./routes/auth');
 const companies = require('./routes/companies');
 const interviews = require('./routes/interviews');
-const reviews = require('./routes/reviews');
+const users = require('./routes/users');
 
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/companies', companies);
 app.use('/api/v1/interviews', interviews);
-app.use('/api/v1/reviews', reviews);
+app.use('/api/v1/users',users);
 
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, console.log('Server running in ', process.env.NODE_ENV, ' mode on port ', PORT));

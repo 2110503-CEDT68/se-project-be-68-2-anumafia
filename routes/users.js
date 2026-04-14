@@ -1,14 +1,10 @@
 const express = require('express');
-const { register, login, getMe, logout, updatePassword,banUser,unbanUser,giveYellowCard } = require('../controllers/auth');
+const {banUser,unbanUser,giveYellowCard } = require('../controllers/users');
 const { protect,authorize }= require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.get('/me', protect,getMe);
-router.get('/logout',logout);
-router.put('/updatepassword', protect,updatePassword);
+
 router.put('/ban/:id',protect,authorize('admin'),banUser);
 router.put('/unban/:id', protect,authorize('admin'),unbanUser);
 router.put('/yellowcard/:id',protect,authorize('admin'),giveYellowCard);
