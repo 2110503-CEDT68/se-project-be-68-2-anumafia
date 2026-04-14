@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router({ mergeParams: true });
-const { banUser, unbanUser, giveYellowCard, getUsers } = require("../controllers/user");
+const { banUser, unbanUser, giveYellowCard, getUsers } = require("../controllers/users");
 const { protect, authorize } = require("../middleware/auth");
 
 router.route("/")
