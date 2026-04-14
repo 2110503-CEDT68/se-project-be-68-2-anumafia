@@ -56,7 +56,6 @@ app.set('query parser', 'extended');
 const auth = require('./routes/auth');
 const companies = require('./routes/companies');
 const interviews = require('./routes/interviews');
-const users = require('./routes/users');
 const reviews = require('./routes/reviews');
 const users = require('./routes/users');
 
