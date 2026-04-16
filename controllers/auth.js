@@ -375,13 +375,7 @@ exports.giveYellowCard = async (req, res, next) => {
         console.log(err.stack);
         res.status(500).json({ success: false, msg: 'Server error' });
     }
-<<<<<<< HEAD
 };
-||||||| parent of f4f97b5 (create-api-updateme)
-}
-=======
-}
-
 // @desc    Update current user's name, tel, email
 // @route   PUT /api/v1/auth/me
 // @access  Private
@@ -418,4 +412,3 @@ exports.updateMe = async (req, res, next) => {
         res.status(500).json({ success: false, msg: 'Server error' });
     }
 };
->>>>>>> f4f97b5 (create-api-updateme)
