@@ -104,6 +104,10 @@ exports.unbanUser = async (req, res, next) => {
 
     await User.findByIdAndUpdate(req.params.id, {
       ban: { isBanned: false, bannedUntil: null, reason: null },
+      yellowCards: {
+          count: 0,
+          records: []
+      },
     });
 
     res.status(200).json({
