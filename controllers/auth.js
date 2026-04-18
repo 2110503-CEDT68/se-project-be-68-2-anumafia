@@ -1,3 +1,5 @@
+const Interview = require("../models/Interview");
+const Review = require("../models/Review");
 const User = require("../models/User");
 
 // @desc    Register user
@@ -206,6 +208,33 @@ exports.updateMe = async (req, res, next) => {
             const message = Object.values(err.errors).map(val => val.message).join(', ');
             return res.status(400).json({ success: false, msg: message });
         }
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
+};
+
+// @desc    Delete current user
+// @route   DELETE /api/v1/auth/me
+// @access  Private
+exports.deleteMe = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                msg: 'User not found'
+            });
+        }
+
+        await Review.deleteMany({ user: req.user.id });
+        await Interview.deleteMany({ user: req.user.id });
+        await User.deleteOne({ _id: req.user.id });
+
+        res.status(200).json({
+            success: true,
+            data: {}
+        });
+    }
+    catch (err) {
         res.status(500).json({ success: false, msg: 'Server error' });
     }
 };
