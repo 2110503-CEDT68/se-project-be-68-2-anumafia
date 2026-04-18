@@ -43,14 +43,10 @@ const UserSchema = new mongoose.Schema({
             type: Boolean,
             default: false,
         },
-        bannedUntil: {
-            type: Date,
-            default: null,
-        },
-        reason: {
+        reason:{
             type: String,
-            default: null,
-        },
+            default: ""
+        }
     },
     yellowCards: {
         count: {

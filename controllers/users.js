@@ -1,84 +1,39 @@
 const User = require("../models/User");
 
-// @desc    Ban user by ID for a duration
-// @route   PUT /api/v1/auth/ban/:id
-// @access  Private (admin only)
 exports.banUser = async (req, res, next) => {
-  try {
-    const { duration, unit, reason } = req.body;
-    // duration: number, unit: 'minutes' | 'hours' | 'days' | 'permanent'
+    try {
+        const { reason } = req.body;
+        const user = await User.findById(req.params.id);
 
-    const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, msg: 'User not found' });
+        }
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        msg: "User not found",
-      });
-    }
+        if (user.role === 'admin') {
+            return res.status(400).json({ success: false, msg: 'Cannot ban an admin user' });
+        }
 
-    if (user.role === "admin") {
-      return res.status(400).json({
-        success: false,
-        msg: "Cannot ban an admin user",
-      });
-    }
+        if (user.ban?.isBanned) {
+            return res.status(400).json({ success: false, msg: 'User is already banned' });
+        }
 
-    if (user.ban.isBanned) {
-      return res.status(400).json({
-        success: false,
-        msg: "User is already banned",
-      });
-    }
-
-    // Calculate bannedUntil
-    let bannedUntil = null;
-
-    if (unit === "permanent") {
-      bannedUntil = null; // null = permanent
-    } else {
-      if (!duration || !unit) {
-        return res.status(400).json({
-          success: false,
-          msg: "Please provide duration and unit (minutes, hours, days) or use permanent",
+        await User.findByIdAndUpdate(req.params.id, {
+            ban: {
+                isBanned: true,
+                reason: reason || null
+            }
         });
-      }
 
-      const ms = {
-        minutes: 60 * 1000,
-        hours: 60 * 60 * 1000,
-        days: 24 * 60 * 60 * 1000,
-      };
-      if (!ms[unit]) {
-        return res.status(400).json({
-          success: false,
-          msg: "Unit must be minutes, hours, days, or permanent",
+        res.status(200).json({
+            success: true,
+            msg: `User ${user.name} has been permanently banned`,
+            data: { reason: reason || null }
         });
-      }
-
-      bannedUntil = new Date(Date.now() + duration * ms[unit]);
     }
-
-    await User.findByIdAndUpdate(req.params.id, {
-      ban: {
-        isBanned: true,
-        bannedUntil,
-        reason: reason || null,
-      },
-    });
-
-    res.status(200).json({
-      success: true,
-      msg: `User ${user.name} has been banned`,
-      data: {
-        bannedUntil: bannedUntil ?? "permanent",
-        reason: reason,
-      },
-    });
-  } catch (err) {
-    console.log(err.stack);
-    res.status(500).json({ success: false, msg: "Server error" });
-  }
+    catch (err) {
+        console.log(err.stack);
+        res.status(500).json({ success: false, msg: 'Server error' });
+    }
 };
 
 // @desc    Unban user by ID
@@ -103,7 +58,7 @@ exports.unbanUser = async (req, res, next) => {
     }
 
     await User.findByIdAndUpdate(req.params.id, {
-      ban: { isBanned: false, bannedUntil: null, reason: null },
+      ban: { isBanned: false, reason: null },
       yellowCards: {
           count: 0,
           records: []
@@ -170,7 +125,6 @@ exports.giveYellowCard = async (req, res, next) => {
                 },
                 ban: {
                     isBanned: true,
-                    bannedUntil: null,
                     reason: 'Accumulation of 3 yellow cards'
                 }
             });

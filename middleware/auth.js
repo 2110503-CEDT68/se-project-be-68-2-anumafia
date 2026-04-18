@@ -28,22 +28,12 @@ exports.protect = async (req, res, next) => {
     console.log(decoded);
 
     req.user = await User.findById(decoded.id);
-    // Check ban status
     if (req.user.ban?.isBanned) {
-      const bannedUntil = req.user.ban.bannedUntil;
-
-      // ถ้าหมดเวลาแล้ว ให้ unban อัตโนมัติ
-      if (bannedUntil && bannedUntil <= new Date()) {
-        req.user.ban = { isBanned: false, bannedUntil: null, reason: null };
-        await req.user.save({ validateBeforeSave: false });
-      } else {
-        return res.status(403).json({
+      return res.status(403).json({
           success: false,
-          message: "Your account has been banned",
-          bannedUntil: bannedUntil ?? "permanent",
-          reason: req.user.ban.reason,
-        });
-      }
+          message: 'Your account has been banned',
+          reason: req.user.ban.reason
+      });
     }
 
     next();
