@@ -1,5 +1,8 @@
 const User = require("../models/User");
 
+// @desc    Ban user by ID
+// @route   PUT /api/v1/auth/ban/:id
+// @access  Private (admin only)
 exports.banUser = async (req, res, next) => {
     try {
         const { reason } = req.body;
