@@ -1,7 +1,7 @@
 const User = require("../models/User");
 
 // @desc    Ban user by ID
-// @route   PUT /api/v1/auth/ban/:id
+// @route   PUT /api/v1/users/ban/:id
 // @access  Private (admin only)
 exports.banUser = async (req, res, next) => {
     try {
@@ -40,7 +40,7 @@ exports.banUser = async (req, res, next) => {
 };
 
 // @desc    Unban user by ID
-// @route   PUT /api/v1/auth/unban/:id
+// @route   PUT /api/v1/users/unban/:id
 // @access  Private (admin only)
 exports.unbanUser = async (req, res, next) => {
   try {
@@ -79,7 +79,7 @@ exports.unbanUser = async (req, res, next) => {
 };
 
 // @desc    Give yellow card to user
-// @route   PUT /api/v1/auth/yellowcard/:id
+// @route   PUT /api/v1/users/yellowcard/:id
 // @access  Private (admin only)
 exports.giveYellowCard = async (req, res, next) => {
     try {
