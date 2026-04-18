@@ -6,10 +6,10 @@ const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
-router.get('/me', protect,getMe);
 router.get('/logout',logout);
 router.put('/updatepassword', protect,updatePassword);
 router.route('/me')
-    .put(protect,updateMe)
-    .delete(protect, deleteMe);
+    .get(protect, getMe)
+    .put(protect, authorize("admin", "user"), updateMe)
+    .delete(protect, authorize("admin", "user"), deleteMe);
 module.exports = router;
