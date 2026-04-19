@@ -1,61 +1,162 @@
-# 🚀 Getting Started
+# Getting Started
 
-[← Back to README](../README.md)
+This guide will help you set up and run the JobFair Backend API.
 
 ## Prerequisites
 
-- **Node.js** `>= 18.x`
-- **npm** `>= 9.x`
-- A **MongoDB** instance (MongoDB Atlas recommended)
+- **Node.js** - v14.0.0 or higher
+- **npm** - v6.0.0 or higher (comes with Node.js)
+- **MongoDB** - Cloud (MongoDB Atlas) or local instance
+- **Git** - For cloning the repository
 
----
+## Installation Steps
 
-## Installation
-
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/2110503-CEDT68/se-project-be-68-2-anumafia.git
-cd se-project-be-68-2-anumafia
+git clone https://github.com/2110503-CEDT68/be-project-68-ihaveksk.git
+cd be-project-68-ihaveksk
 ```
 
-### 2. Install dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
+This will install all required packages listed in `package.json`.
 
-Copy the example below and create a `.env` file in the project root.  
-See [Environment Variables](ENV.md) for full details.
+### 3. Configure Environment Variables
 
-```bash
-cp .env.example .env   # if provided, otherwise create manually
+Create a `config/config.env` file in the root directory with the following variables:
+
+```env
+PORT=5000
+NODE_ENV=development
+
+# MongoDB Connection
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+
+# JWT Configuration
+JWT_SECRET=your_secret_key_here
+JWT_EXPIRE=30d
+JWT_COOKIE_EXPIRE=30
 ```
 
-### 4. Start the server
+**Important**: Never commit the `config.env` file to version control. It contains sensitive information.
 
-**Development** (auto-restarts on file changes):
+See [Environment Variables](./ENVIRONMENT.md) for detailed information about each variable.
+
+### 4. Start the Server
+
+**Development Mode** (with auto-reload):
+```bash
+npm run dev
+```
+
+**Production Mode**:
+```bash
+npm start
+```
+
+You should see output similar to:
+```
+Server running in development mode on port 5000
+MongoDB Connected: cluster.mongodb.net
+```
+
+## First Steps
+
+### 1. Create an Admin User
+
+Use the authentication endpoints to register your first user:
+
+```bash
+curl -X POST http://localhost:5000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "tel": "1234567890",
+    "password": "securepassword123"
+  }'
+```
+
+### 2. Login
+
+```bash
+curl -X POST http://localhost:5000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "securepassword123"
+  }'
+```
+
+The response will include a JWT token. Use this token for authenticated requests in the `Authorization` header.
+
+### 3. Test API Endpoints
+
+See [API Documentation](./API.md) for complete endpoint reference.
+
+## Development Workflow
+
+### Hot Reload
+
+The `npm run dev` command uses `nodemon` for automatic server restart on file changes:
 
 ```bash
 npm run dev
 ```
 
-**Production:**
+### Project Structure
 
-```bash
-npm start
+```
+├── config/          # Configuration files
+├── controllers/     # Business logic
+├── middleware/      # Custom middleware
+├── models/          # Database schemas
+├── routes/          # API routes
+├── docs/            # Documentation
+└── server.js        # Entry point
 ```
 
-The server will be available at `http://localhost:5000` by default (or the `PORT` set in `.env`).
+See [Project Structure](./STRUCTURE.md) for details.
 
----
+## Troubleshooting
 
-## Scripts
+### MongoDB Connection Failed
 
-| Command | Description |
-|---|---|
-| `npm start` | Run in production mode |
-| `npm run dev` | Run with Nodemon (watch mode) |
-| `npm test` | Run API tests via Newman |
+- Verify `MONGO_URI` is correct in `config/config.env`
+- Check MongoDB cluster is running and accessible
+- Ensure IP whitelist includes your machine (for MongoDB Atlas)
+- Verify network connectivity
+
+### Port Already in Use
+
+If port 5000 is already in use:
+- Change the `PORT` in `config/config.env`
+- Or kill the process using the port
+
+### Dependencies Installation Issues
+
+Try clearing npm cache and reinstalling:
+
+```bash
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm install
+```
+
+## Next Steps
+
+1. Read [API Documentation](./API.md) to understand available endpoints
+2. Review [Project Structure](./STRUCTURE.md) to understand the codebase
+3. Check [Security](./SECURITY.md) for security best practices
+4. Review [Environment Variables](./ENVIRONMENT.md) for configuration options
+
+## Additional Resources
+
+- [Express.js Documentation](https://expressjs.com/)
+- [MongoDB/Mongoose Documentation](https://mongoosejs.com/)
+- [JWT Best Practices](https://tools.ietf.org/html/rfc7519)
