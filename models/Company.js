@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const CompanySchema = new mongoose.Schema({
+    user: {
+            type: mongoose.Schema.ObjectId,
+            ref: 'User',
+            required: true
+    },
     name: {
         type: String,
         required: [true, 'Please add a name'],
@@ -10,19 +15,20 @@ const CompanySchema = new mongoose.Schema({
     },
     address: {
         type: String,
-        required: [true, 'Please add an address'],
     },
     website: {
         type: String,
-        required: [true, 'Please add a website'],
     },
     description: {
         type: String,
-        required: [true, 'Please add a description'],
     },
     tel: {
         type: String,
         required: [true, 'Please add a telephone number']
+    },
+    public: {
+        type: Boolean,
+        default: false
     },
     ratingAverage: {
         type: Number,

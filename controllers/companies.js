@@ -1,6 +1,7 @@
 const Company = require('../models/Company')
 const Interview = require('../models/Interview.js');
 const Review = require('../models/Review.js');
+const { register } = require('./auth.js');
 
 // @desc    Get all companies
 // @route   GET /api/v1/companies
@@ -111,7 +112,13 @@ exports.getCompany = async (req, res, next) => {
 // @access  Private
 exports.createCompany = async (req, res, next) => {
     try{
-        const company = await Company.create(req.body);
+        const user = await register(req, res, next);
+        
+        const company = await Company.create({
+            ...req.body,
+            user: user._id
+        });
+        
         res.status(201).json({
             success: true,
             data: company

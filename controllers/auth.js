@@ -18,7 +18,9 @@ exports.register = async (req, res, next) => {
       role,
     });
 
-    sendTokenResponse(user, 200, res);
+    if (role !== "company") sendTokenResponse(user, 200, res);
+
+    return user;
   } catch (err) {
     if (err.name === "ValidationError") {
       const message = Object.values(err.errors)
