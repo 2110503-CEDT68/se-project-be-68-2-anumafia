@@ -1,7 +1,8 @@
 const Company = require('../models/Company')
 const Interview = require('../models/Interview.js');
 const Review = require('../models/Review.js');
-const { register } = require('./auth.js');
+const { register, updateMe } = require('./auth.js');
+const User = require('../models/User.js');
 
 // @desc    Get all companies
 // @route   GET /api/v1/companies
@@ -145,16 +146,32 @@ exports.createCompany = async (req, res, next) => {
 // @access  Private
 exports.updateCompany = async (req, res, next) => {
     try {
-        const company = await Company.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        });
+        let company = await Company.findById(req.params.id);
 
         if (!company) {
             return res.status(400).json({
                 success: false
             });
         }
+
+        const userId = company.user;
+
+        const userUpdateData = {
+            name: req.body.name,
+            tel: req.body.tel,
+        };
+        
+        if (Object.keys(userUpdateData).length > 0) {
+            await User.findByIdAndUpdate(userId, userUpdateData, {
+                new: true,
+                runValidators: true
+            });
+        }
+
+        company = await Company.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
 
         res.status(200).json({
             success: true,
