@@ -24,6 +24,11 @@ const InterviewSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'Company',
         required: true
+    },  
+    attendanceStatus: {
+        type: String,
+        enum: ['pending', 'attended', 'absent'],
+        default: 'pending'
     },
     createdAt: {
         type: Date,

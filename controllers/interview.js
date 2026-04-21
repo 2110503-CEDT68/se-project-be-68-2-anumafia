@@ -249,3 +249,46 @@ exports.deleteInterviewSession = async (req, res, next) => {
         }); 
     }
 }
+
+// @desc    Update attendance status
+// @route   PUT /api/v1/interviews/:id/attendance
+// @access  Private (admin only)
+exports.updateAttendanceStatus = async (req, res, next) => {
+    try {
+        const { attendanceStatus } = req.body;
+
+        if (!['pending', 'attended', 'absent'].includes(attendanceStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: 'attendanceStatus must be pending, attended, or absent'
+            });
+        }
+
+        const interview = await Interview.findById(req.params.id);
+
+        if (!interview) {
+            return res.status(404).json({
+                success: false,
+                message: `No interview with the id of ${req.params.id}`
+            });
+        }
+
+        const updated = await Interview.findByIdAndUpdate(
+            req.params.id,
+            { attendanceStatus },
+            { new: true, runValidators: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            data: updated
+        });
+    }
+    catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Cannot update attendance status'
+        });
+    }
+};
