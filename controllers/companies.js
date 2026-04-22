@@ -2,7 +2,7 @@ const Company = require('../models/Company')
 const Interview = require('../models/Interview.js');
 const Review = require('../models/Review.js');
 const { register } = require('./auth.js');
-
+const User = require('../models/User.js');
 // @desc    Get all companies
 // @route   GET /api/v1/companies
 // @access  Public
@@ -184,22 +184,41 @@ exports.deleteCompany = async (req, res, next) => {
         const company = await Company.findById(req.params.id);
 
         if (!company) {
-            return res.status(400).json({
-                success: false
+            return res.status(404).json({
+                success: false,
+                message: 'Company not found'
             });
         }
-        await Interview.deleteMany({ company: req.params.id });
-        await Review.deleteMany({ company: req.params.id });
-        await Company.deleteOne({ _id: req.params.id });
 
+        if(req.user.role === 'company' && req.user.id !== company.user.toString()){
+            return res.status(403).json({
+                success: false,
+                message: 'User has not owned this company'
+            });
+        }
+        // ลบ reviews และ in    terviews ที่เกี่ยวข้อง
+        await Review.deleteMany({ company: req.params.id });
+        await Interview.deleteMany({ company: req.params.id });
+        await Company.deleteOne({ _id: req.params.id });
+        
+        // ลบ user ที่มี role 'company' ที่เป็นเจ้าของ company นี้
+        const companyUser = await User.findById(company.user);
+        if (companyUser && companyUser.role === 'company') {
+            await User.deleteOne({ _id: company.user });
+        }
+        
+        
         res.status(200).json({
             success: true,
+            message: 'Company and associated data deleted successfully',
             data: {}
         });
     }
     catch (err) {
+        console.log(err.stack);
         res.status(400).json({
-            success: false
+            success: false,
+            message: 'Failed to delete company'
         });
     }
 }
