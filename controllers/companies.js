@@ -246,3 +246,49 @@ exports.deleteCompany = async (req, res, next) => {
         });
     }
 }
+
+// @desc    Update company public status
+// @route   PUT /api/v1/companies/:id/public
+// @access  Private
+exports.updateCompanyPublicStatus = async (req, res, next) => {
+    try {
+        let company = await Company.findById(req.params.id);
+
+        if (!company) {
+            return res.status(400).json({
+                success: false,
+                message: 'Company not found'
+            });
+        }
+
+        if (company.user.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authorized to update this company'
+            });
+        }
+
+        company = await Company.findByIdAndUpdate(req.params.id, { public: req.body.public }, {
+            new: true,
+            runValidators: true
+        });
+
+        res.status(200).json({
+            success: true,
+            data: company
+        });
+    }
+    catch (err) {
+        if (err.name === 'ValidationError') {
+            const message = Object.values(err.errors).map(val => val.message).join(', ');
+            return res.status(400).json({
+                success: false,
+                message: message
+            });
+        }
+
+        res.status(400).json({
+            success: false
+        });
+    }
+};

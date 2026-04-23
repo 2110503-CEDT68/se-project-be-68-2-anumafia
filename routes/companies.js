@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getCompanies, getCompany, createCompany, updateCompany, deleteCompany } = require('../controllers/companies');
+const { getCompanies, getCompany, createCompany, updateCompany, deleteCompany, updateCompanyPublicStatus } = require('../controllers/companies');
 const { protect, authorize } = require('../middleware/auth');
 
 // Include other resource routers
@@ -14,5 +14,6 @@ router.route('/').get(getCompanies)
 router.route('/:id').get(getCompany)
     .put(protect, authorize('company', 'admin'), updateCompany)
     .delete(protect, authorize('admin'), deleteCompany);
+router.route('/:id/public').put(protect, authorize('company', 'admin'), updateCompanyPublicStatus);
 
 module.exports = router;
