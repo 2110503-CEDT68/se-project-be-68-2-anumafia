@@ -186,8 +186,14 @@ exports.getUsers = async (req, res, next) => {
     // Create operators ($gt, $gte, $lt, $lte, $in)
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
 
+    const parsedQuery = JSON.parse(queryStr);
+
+    if (parsedQuery.name) {
+        parsedQuery.name = { $regex: parsedQuery.name, $options: 'i' };
+    }
+
     // Finding resource
-    query = User.find(JSON.parse(queryStr));
+    query = User.find(parsedQuery);
 
     // Select Fields
     if (req.query.select) {
@@ -207,38 +213,22 @@ exports.getUsers = async (req, res, next) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 25;
     const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
 
     try {
         // Count total documents for pagination
-        const total = await User.countDocuments(JSON.parse(queryStr));
+        const total = await User.countDocuments(parsedQuery);
         
         query = query.skip(startIndex).limit(limit);
 
         // Executing query
         const users = await query;
 
-        // Pagination result
-        const pagination = {};
-
-        if (endIndex < total) {
-            pagination.next = {
-                page: page + 1,
-                limit
-            };
-        }
-
-        if (startIndex > 0) {
-            pagination.prev = {
-                page: page - 1,
-                limit
-            };
-        }
-
         res.status(200).json({
             success: true,
-            count: users.length,
-            pagination,
+            totalItems: total,
+            totalPages: Math.ceil(total / limit),
+            itemCount: users.length,
+            currentPage: page,
             data: users
         });
     } catch (err) {
