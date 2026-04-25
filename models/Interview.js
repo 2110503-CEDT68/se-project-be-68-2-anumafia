@@ -6,13 +6,11 @@ const InterviewSchema = new mongoose.Schema({
         required: [true, 'Please add a session date'],
         validate: {
             validator: function(value) {
-                // Validate that date is between May 10-13, 2022
-                const startDate = new Date('2022-05-10');
-                const endDate = new Date('2022-05-13');
-                endDate.setHours(23, 59, 59, 999);
-                return value >= startDate && value <= endDate;
+                // Validate that date is on or after today
+                const startDate = new Date();
+                return value >= startDate;
             },
-            message: 'Interview date must be between May 10-13, 2022'
+            message: 'Interview date must be today or later'
         }
     },
     user: {
