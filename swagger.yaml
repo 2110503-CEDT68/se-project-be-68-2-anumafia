@@ -4,10 +4,10 @@ info:
   description: A secure Node.js Express backend API for managing job fair operations, including companies, interviews, and user reviews.
   version: 1.0.0
 servers:
-  - url: http://localhost:5000/api/v1
-    description: Local Development Server
   - url: https://se-project-be-68-2-anumafia.vercel.app/api/v1
     description: Production Server
+  - url: http://localhost:5000/api/v1
+    description: Local Development Server
 
 components:
   securitySchemes:
