@@ -1,0 +1,620 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Online JobFair API",
+    "description": "A secure Node.js Express backend API for managing job fair operations, including companies, interviews, and user reviews.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api/v1",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://se-project-be-68-2-anumafia.vercel.app/api/v1",
+      "description": "Production Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": ["name", "tel", "email", "role", "password"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "tel": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["user", "company", "admin"] },
+          "password": { "type": "string", "format": "password" },
+          "ban": {
+            "type": "object",
+            "properties": {
+              "isBanned": { "type": "boolean" },
+              "reason": { "type": "string" }
+            }
+          },
+          "yellowCards": {
+            "type": "object",
+            "properties": {
+              "count": { "type": "integer" },
+              "records": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "reason": { "type": "string" },
+                    "issuedAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "required": ["user", "name", "tel"],
+        "properties": {
+          "id": { "type": "string" },
+          "user": { "type": "string", "description": "User ID of the company owner" },
+          "name": { "type": "string" },
+          "tel": { "type": "string" },
+          "public": { "type": "boolean", "default": false },
+          "ratingAverage": { "type": "number", "minimum": 0, "maximum": 5 },
+          "reviewCount": { "type": "integer" },
+          "address": { "type": "string" },
+          "description": { "type": "string" },
+          "website": { "type": "string", "format": "uri" }
+        }
+      },
+      "Interview": {
+        "type": "object",
+        "required": ["sessionDate", "user", "company"],
+        "properties": {
+          "id": { "type": "string" },
+          "sessionDate": { "type": "string", "format": "date-time" },
+          "user": { "type": "string", "description": "User ID" },
+          "company": { "type": "string", "description": "Company ID" },
+          "attendanceStatus": { "type": "string", "enum": ["pending", "attended", "absent"], "default": "pending" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Review": {
+        "type": "object",
+        "required": ["user", "company", "rating", "reviewText"],
+        "properties": {
+          "id": { "type": "string" },
+          "user": { "type": "string", "description": "User ID" },
+          "company": { "type": "string", "description": "Company ID" },
+          "rating": { "type": "integer", "minimum": 0, "maximum": 5 },
+          "reviewText": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UpdatePassword": {
+        "type": "object",
+        "required": ["currentPassword", "newPassword"],
+        "properties": {
+          "currentPassword": { "type": "string" },
+          "newPassword": { "type": "string", "minLength": 6 }
+        }
+      },
+      "ReasonParams": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": {
+          "reason": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "tel": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "format": "password" },
+                  "role": { "type": "string", "enum": ["user", "company"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Successful registration" },
+          "400": { "description": "Validation error" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login user",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "format": "password" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Successful login with token" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Log user out",
+        "responses": {
+          "200": { "description": "Successfully logged out" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current logged in user",
+        "responses": {
+          "200": { "description": "User data retrieved" }
+        }
+      },
+      "put": {
+        "tags": ["Auth"],
+        "summary": "Update current user's name, tel, email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "tel": { "type": "string" },
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Auth"],
+        "summary": "Delete current user and associated data",
+        "responses": {
+          "200": { "description": "User deleted" }
+        }
+      }
+    },
+    "/auth/updatepassword": {
+      "put": {
+        "tags": ["Auth"],
+        "summary": "Update password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePassword"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password updated" }
+        }
+      }
+    },
+    "/companies": {
+      "get": {
+        "tags": ["Companies"],
+        "summary": "Get all companies",
+        "security": [],
+        "parameters": [
+          { "in": "query", "name": "page", "schema": { "type": "integer" } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer" } },
+          { "in": "query", "name": "select", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Array of companies" }
+        }
+      },
+      "post": {
+        "tags": ["Companies"],
+        "summary": "Create a company (Admin)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "tel": { "type": "string" },
+                      "email": { "type": "string", "format": "email" },
+                      "password": { "type": "string", "format": "password" },
+                      "role": { "type": "string", "enum": ["company"] }
+                    }
+                  },
+                  { "$ref": "#/components/schemas/Company" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Company created" }
+        }
+      }
+    },
+    "/companies/{id}": {
+      "get": {
+        "tags": ["Companies"],
+        "summary": "Get single company",
+        "security": [],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Company details" }
+        }
+      },
+      "put": {
+        "tags": ["Companies"],
+        "summary": "Update single company (Admin/Owner)",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Company"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Company updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Companies"],
+        "summary": "Delete company (Admin/Owner)",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Company deleted" }
+        }
+      }
+    },
+    "/companies/{id}/public": {
+      "put": {
+        "tags": ["Companies"],
+        "summary": "Update company public status",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "public": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status updated" }
+        }
+      }
+    },
+    "/interviews": {
+      "get": {
+        "tags": ["Interviews"],
+        "summary": "Get all interview sessions",
+        "responses": {
+          "200": { "description": "Array of interview sessions" }
+        }
+      }
+    },
+    "/companies/{companyid}/interviews": {
+      "get": {
+        "tags": ["Interviews"],
+        "summary": "Get interviews for a specific company",
+        "parameters": [
+          { "in": "path", "name": "companyid", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Array of interview sessions" }
+        }
+      },
+      "post": {
+        "tags": ["Interviews"],
+        "summary": "Add an interview session",
+        "parameters": [
+          { "in": "path", "name": "companyid", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Interview"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Interview session added" }
+        }
+      }
+    },
+    "/interviews/{id}": {
+      "get": {
+        "tags": ["Interviews"],
+        "summary": "Get single interview session",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Interview details" }
+        }
+      },
+      "put": {
+        "tags": ["Interviews"],
+        "summary": "Update interview session",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Interview"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Interview updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Interviews"],
+        "summary": "Delete interview",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Interview deleted" }
+        }
+      }
+    },
+    "/interviews/{id}/attendance": {
+      "put": {
+        "tags": ["Interviews"],
+        "summary": "Update attendance status (Company only)",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "attendanceStatus": { "type": "string", "enum": ["pending", "attended", "absent"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Attendance updated" }
+        }
+      }
+    },
+    "/reviews": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Get all reviews (Admin)",
+        "responses": {
+          "200": { "description": "Array of all reviews" }
+        }
+      },
+      "post": {
+        "tags": ["Reviews"],
+        "summary": "Create a review for a company",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Review"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Review created" }
+        }
+      }
+    },
+    "/reviews/{id}": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Get reviews for a specific company",
+        "security": [],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" }, "description": "Company ID to fetch reviews for" }
+        ],
+        "responses": {
+          "200": { "description": "Reviews fetched" }
+        }
+      },
+      "put": {
+        "tags": ["Reviews"],
+        "summary": "Update review",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rating": { "type": "integer", "minimum": 0, "maximum": 5 },
+                  "reviewText": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Review updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Reviews"],
+        "summary": "Delete review",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Review deleted" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users (Admin only)",
+        "parameters": [
+          { "in": "query", "name": "page", "schema": { "type": "integer" } },
+          { "in": "query", "name": "limit", "schema": { "type": "integer" } },
+          { "in": "query", "name": "name", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Paginated array of users" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get single user (Admin only)",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "User details" }
+        }
+      }
+    },
+    "/users/ban/{id}": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Permanently ban a user (Admin only)",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User banned successfully" }
+        }
+      }
+    },
+    "/users/unban/{id}": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Unban a user (Admin only)",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "User unbanned successfully" }
+        }
+      }
+    },
+    "/users/yellowcard/{id}": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Issue a yellow card to a user (Admin only)",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Yellow card issued (auto-ban on 3rd card)" }
+        }
+      }
+    }
+  }
+}

@@ -9,8 +9,7 @@ const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cors = require('cors');
 const swaggerUI = require('swagger-ui-express');
-const YAML = require('yamljs');
-const swaggerDocument = YAML.load('./swagger.yaml');
+const swaggerDocument = require('./swagger.json');
 
 //Load env vars
 dotenv.config({ path: './config/config.env' });
