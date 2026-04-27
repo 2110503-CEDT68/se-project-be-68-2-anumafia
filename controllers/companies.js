@@ -25,11 +25,18 @@ exports.getCompanies = async (req, res, next) => {
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
 
 
-    if (!req.user || req.user.role !== 'admin') {
-        queryStr = JSON.stringify({
-            ...JSON.parse(queryStr),
-            public: true
-        });
+    if (!req.user){
+        if(req.user.role === 'user') {
+            queryStr = JSON.stringify({
+                ...JSON.parse(queryStr),
+                public: true
+            });
+        }else if(req.user.role === 'company') {
+            queryStr = JSON.stringify({
+                ...JSON.parse(queryStr),
+                user: req.user.id
+            });
+        }
     }
 
     query = Company.find(JSON.parse(queryStr)).populate('interviewSessions');
@@ -104,8 +111,8 @@ exports.getCompany = async (req, res, next) => {
                 success: false,
             });
         }
-
-        if (!company.public && (!req.user || req.user.role !== 'admin')) {
+        
+        if ((!req.user || req.user.role === 'user' || (req.user.role === 'company' && req.user.id !== company.user.toString())) && !company.public) {
             return res.status(403).json({
                 success: false,
                 message: 'Company is not public'
