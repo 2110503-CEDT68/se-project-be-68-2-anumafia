@@ -24,22 +24,23 @@ exports.getCompanies = async (req, res, next) => {
     let queryStr = JSON.stringify(reqQuery);
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
 
+    let parsedQuery = JSON.parse(queryStr);
 
-    if (!req.user){
-        if(req.user.role === 'user') {
-            queryStr = JSON.stringify({
-                ...JSON.parse(queryStr),
-                public: true
-            });
-        }else if(req.user.role === 'company') {
-            queryStr = JSON.stringify({
-                ...JSON.parse(queryStr),
-                user: req.user.id
-            });
+    // Filter by public status based on user role
+    if (!req.user || req.user.role !== 'admin') {
+        if (req.user && req.user.role === 'company') {
+            // Company users can see public companies or their own company
+            parsedQuery.$or = [
+                { public: true },
+                { user: req.user.id }
+            ];
+        } else {
+            // Regular users and unauthenticated users can only see public companies
+            parsedQuery.public = true;
         }
     }
 
-    query = Company.find(JSON.parse(queryStr)).populate('interviewSessions');
+    query = Company.find(parsedQuery).populate('interviewSessions');
 
     //Select Fields
     if(req.query.select){
