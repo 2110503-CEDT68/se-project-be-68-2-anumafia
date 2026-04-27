@@ -58,7 +58,7 @@ exports.protectOptional = async (req, res, next) => {
   }
 
   // If no token, continue without authentication
-  if (!token || token == "null") {
+  if (!token || token == "null" || token == "") {
     return next();
   }
 
@@ -79,9 +79,8 @@ exports.protectOptional = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.log(err.stack);
-    // If token is invalid, continue without authentication
-    next();
+    // If token is invalid or malformed, continue without authentication
+    return next();
   }
 };
 
