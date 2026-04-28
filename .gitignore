@@ -4,3 +4,5 @@ node_modules/*
 config/config.env
 #ignore package-lock.json
 package-lock.json
+#ignore coverage folder
+coverage
