@@ -13,7 +13,7 @@ router.route('/').get(protectOptional, getCompanies)
     .post(protect, authorize('admin'), createCompany);
 router.route('/:id').get(protectOptional, getCompany)
     .put(protect, authorize('company', 'admin'), updateCompany)
-    .delete(protect, authorize('admin'), deleteCompany);
+    .delete(protect, authorize('admin', 'company'), deleteCompany);
 router.route('/:id/public').put(protect, authorize('company', 'admin'), updateCompanyPublicStatus);
 
 module.exports = router;
